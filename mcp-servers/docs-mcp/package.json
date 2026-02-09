@@ -1,0 +1,22 @@
+{
+    "name": "docs-mcp",
+    "version": "1.0.0",
+    "description": "MCP Server for internal documentation search - OnboardingOS",
+    "main": "index.js",
+    "type": "module",
+    "scripts": {
+        "start": "node index.js",
+        "index": "node indexDocs.js"
+    },
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "^0.6.0"
+    },
+    "keywords": [
+        "mcp",
+        "docs",
+        "onboarding",
+        "rag"
+    ],
+    "author": "OnboardingOS Team",
+    "license": "MIT"
+}

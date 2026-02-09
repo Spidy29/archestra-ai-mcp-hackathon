@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment files (NEVER commit these!)
+.env
+.env.local
+.env.*.local
+*.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Build outputs
+dist/
+build/
+
+# Docker volumes (local data)
+archestra-postgres-data/
+archestra-app-data/
+
+# Private docs (don't expose strategy!)
+PROJECT_CONTEXT.md
+NOTES.md
+*.private.md
+
+# Archestra local config (may have tokens)
+.archestra/
+
+# Sensitive files
+*.key
+*.pem
+*.token
+*credentials*
+*secret*
