@@ -1,0 +1,89 @@
+version: '3.8'
+
+# ============================================
+# OnboardingOS - Docker Compose Setup
+# ============================================
+# Usage: docker-compose up -d
+# Access UI: http://localhost:3000
+# Access Admin: http://localhost:9000
+
+services:
+  # Archestra Platform (MCP Orchestrator)
+  archestra:
+    image: archestra/platform:latest
+    container_name: archestra-platform
+    ports:
+      - "9000:9000"   # Admin/API
+      - "3000:3000"   # Chat UI
+    environment:
+      - ARCHESTRA_QUICKSTART=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - archestra-postgres-data:/var/lib/postgresql/data
+      - archestra-app-data:/app/data
+    restart: unless-stopped
+
+  # GitHub MCP Server
+  github-mcp:
+    build:
+      context: ./mcp-servers/github-mcp
+      dockerfile: Dockerfile
+    container_name: github-mcp
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - PORT=4001
+    ports:
+      - "4001:4001"
+    restart: unless-stopped
+
+  # Docs MCP Server
+  docs-mcp:
+    build:
+      context: ./mcp-servers/docs-mcp
+      dockerfile: Dockerfile
+    container_name: docs-mcp
+    environment:
+      - PORT=4002
+    ports:
+      - "4002:4002"
+    restart: unless-stopped
+
+  # Terminal MCP Server
+  terminal-mcp:
+    build:
+      context: ./mcp-servers/terminal-mcp
+      dockerfile: Dockerfile
+    container_name: terminal-mcp
+    environment:
+      - PORT=4003
+    ports:
+      - "4003:4003"
+    restart: unless-stopped
+
+  # Slack MCP Server
+  slack-mcp:
+    build:
+      context: ./mcp-servers/slack-mcp
+      dockerfile: Dockerfile
+    container_name: slack-mcp
+    environment:
+      - PORT=4004
+    ports:
+      - "4004:4004"
+    restart: unless-stopped
+
+  # Progress Tracker MCP Server
+  progress-mcp:
+    build:
+      context: ./mcp-servers/progress-mcp
+      dockerfile: Dockerfile
+    container_name: progress-mcp
+    environment:
+      - PORT=4005
+    ports:
+      - "4005:4005"
+    restart: unless-stopped
+
+volumes:
+  archestra-postgres-data:
+  archestra-app-data:

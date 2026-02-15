@@ -1,5 +1,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import express from 'express';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -31,21 +33,21 @@ async function explainRepoStructure(owner, repo) {
   try {
     // Get repo info
     const { data: repoInfo } = await octokit.rest.repos.get({ owner, repo });
-    
+
     // Get root directory contents
     const { data: contents } = await octokit.rest.repos.getContent({
       owner,
       repo,
       path: ''
     });
-    
+
     // Get languages used
     const { data: languages } = await octokit.rest.repos.listLanguages({ owner, repo });
-    
+
     // Build structure summary
     const folders = contents.filter(item => item.type === 'dir').map(d => d.name);
     const files = contents.filter(item => item.type === 'file').map(f => f.name);
-    
+
     return {
       name: repoInfo.name,
       description: repoInfo.description || 'No description provided',
@@ -75,7 +77,7 @@ async function findFile(owner, repo, filename) {
       q: `filename:${filename} repo:${owner}/${repo}`,
       per_page: 10
     });
-    
+
     return {
       found: data.total_count,
       files: data.items.map(item => ({
@@ -96,15 +98,15 @@ async function explainCode(owner, repo, path) {
       repo,
       path
     });
-    
+
     if (data.type !== 'file') {
       return { error: 'Path is not a file' };
     }
-    
+
     const content = Buffer.from(data.content, 'base64').toString('utf-8');
     const lines = content.split('\n').length;
     const extension = path.split('.').pop();
-    
+
     return {
       path: path,
       extension: extension,
@@ -129,7 +131,7 @@ async function getRecentPRs(owner, repo, count = 5) {
       direction: 'desc',
       per_page: count
     });
-    
+
     return {
       pullRequests: data.map(pr => ({
         number: pr.number,
@@ -154,19 +156,19 @@ async function whoOwnsCode(owner, repo, path) {
       path,
       per_page: 20
     });
-    
+
     // Count commits per author
     const authorCounts = {};
     commits.forEach(commit => {
       const author = commit.author?.login || commit.commit.author?.name || 'Unknown';
       authorCounts[author] = (authorCounts[author] || 0) + 1;
     });
-    
+
     // Sort by commit count
     const sortedAuthors = Object.entries(authorCounts)
       .sort((a, b) => b[1] - a[1])
       .map(([author, count]) => ({ author, commits: count }));
-    
+
     return {
       path: path,
       topContributors: sortedAuthors.slice(0, 5),
@@ -257,10 +259,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 // Handle tool calls
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
-  
+
   try {
     let result;
-    
+
     switch (name) {
       case 'explain_repo_structure':
         result = await explainRepoStructure(args.owner, args.repo);
@@ -283,7 +285,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           isError: true
         };
     }
-    
+
     return {
       content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
     };
@@ -298,9 +300,35 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 // ==================== START SERVER ====================
 
 async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error('GitHub MCP Server running on stdio');
+  const PORT = process.env.PORT;
+  if (PORT) {
+    const app = express();
+
+    // Log all requests
+    app.use((req, res, next) => {
+      console.error(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+      next();
+    });
+
+    let transport;
+    app.get('/sse', async (req, res) => {
+      transport = new SSEServerTransport('/message', res);
+      await server.connect(transport);
+    });
+    app.post('/sse', async (req, res) => {
+      if (transport) await transport.handlePostMessage(req, res);
+    });
+    app.post('/message', async (req, res) => {
+      if (transport) await transport.handlePostMessage(req, res);
+    });
+    app.listen(PORT, '0.0.0.0', () => {
+      console.error(`GitHub MCP Server running on http://0.0.0.0:${PORT}/sse`);
+    });
+  } else {
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+    console.error('GitHub MCP Server running on stdio');
+  }
 }
 
 main().catch(console.error);

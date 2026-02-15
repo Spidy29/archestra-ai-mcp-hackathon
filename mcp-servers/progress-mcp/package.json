@@ -1,12 +1,11 @@
 {
-    "name": "docs-mcp",
+    "name": "progress-mcp",
     "version": "1.0.0",
-    "description": "MCP Server for internal documentation search - OnboardingOS",
+    "description": "MCP Server for tracking onboarding progress - OnboardingOS",
     "main": "index.js",
     "type": "module",
     "scripts": {
-        "start": "node index.js",
-        "index": "node indexDocs.js"
+        "start": "node index.js"
     },
     "dependencies": {
         "@modelcontextprotocol/sdk": "^0.6.0",
@@ -14,9 +13,9 @@
     },
     "keywords": [
         "mcp",
-        "docs",
+        "progress",
         "onboarding",
-        "rag"
+        "tracker"
     ],
     "author": "OnboardingOS Team",
     "license": "MIT"

@@ -1,0 +1,76 @@
+{
+    "name": "OnboardingOS",
+    "version": "1.0.0",
+    "description": "AI-powered developer onboarding assistant that turns weeks of onboarding into hours",
+    "personality": {
+        "role": "Friendly Onboarding Buddy",
+        "tone": "Warm, encouraging, and technically precise",
+        "systemPrompt": "You are OnboardingOS, an AI-powered onboarding assistant designed to help new developers become productive quickly. You have access to 4 MCP servers that give you superpowers:\n\n1. **GitHub MCP** - You can explore any repository, explain code structure, find files, identify code owners, and show recent PRs.\n2. **Docs MCP** - You can search internal documentation, retrieve onboarding checklists, and find answers to common questions.\n3. **Terminal MCP** - You can check if the developer's environment is properly set up, suggest fixes, and run safe commands.\n4. **Slack MCP** - You can find the right expert to ask, search past discussions, and help the new developer connect with the team.\n\nAlways be:\n- 🎯 Proactive: Don't wait to be asked - suggest next steps\n- 🛡️ Security-conscious: Always highlight when actions need approval\n- 📊 Data-driven: Use tools to give concrete answers, not guesses\n- 💡 Educational: Explain WHY, not just WHAT\n- 🤝 Supportive: Remember how overwhelming onboarding can be\n\nWhen a new developer asks for help:\n1. First check their environment (Terminal MCP)\n2. Share the onboarding checklist (Docs MCP)\n3. Explain the codebase they'll work with (GitHub MCP)\n4. Connect them with the right people (Slack MCP)"
+    },
+    "mcpServers": {
+        "github-mcp": {
+            "command": "node",
+            "args": [
+                "mcp-servers/github-mcp/index.js"
+            ],
+            "description": "Codebase understanding - explore repos, explain code, find owners",
+            "tools": 5,
+            "env": {
+                "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+            }
+        },
+        "docs-mcp": {
+            "command": "node",
+            "args": [
+                "mcp-servers/docs-mcp/index.js"
+            ],
+            "description": "Documentation search - internal wikis, onboarding guides, FAQs",
+            "tools": 4
+        },
+        "terminal-mcp": {
+            "command": "node",
+            "args": [
+                "mcp-servers/terminal-mcp/index.js"
+            ],
+            "description": "Environment setup - check tools, run commands, fix issues",
+            "tools": 5
+        },
+        "slack-mcp": {
+            "command": "node",
+            "args": [
+                "mcp-servers/slack-mcp/index.js"
+            ],
+            "description": "Team integration - find experts, search discussions, welcome messages",
+            "tools": 5
+        },
+        "progress-mcp": {
+            "command": "node",
+            "args": [
+                "mcp-servers/progress-mcp/index.js"
+            ],
+            "description": "Onboarding progress tracking - dashboard, achievements, leaderboard",
+            "tools": 4
+        }
+    },
+    "security": {
+        "approvalRequired": [
+            "run_setup_command",
+            "send_welcome_message"
+        ],
+        "description": "These tools modify external systems and require explicit user approval via Archestra's security guardrails"
+    },
+    "costOptimization": {
+        "strategy": "smart-routing",
+        "description": "Use lightweight models for simple lookups (doc search, file find), expensive models for code explanation and synthesis"
+    },
+    "observability": {
+        "enabled": true,
+        "trackMetrics": [
+            "tools_used_per_session",
+            "most_searched_docs",
+            "common_setup_issues",
+            "expert_lookup_topics",
+            "onboarding_completion_rate"
+        ]
+    }
+}

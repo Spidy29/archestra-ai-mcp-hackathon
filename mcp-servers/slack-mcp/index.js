@@ -1,5 +1,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import express from 'express';
 import {
     CallToolRequestSchema,
     ListToolsRequestSchema,
@@ -341,9 +343,28 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 });
 
 async function main() {
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
-    console.error('Slack MCP Server running on stdio');
+    const PORT = process.env.PORT;
+    if (PORT) {
+        const app = express();
+        let transport;
+        app.get('/sse', async (req, res) => {
+            transport = new SSEServerTransport('/message', res);
+            await server.connect(transport);
+        });
+        app.post('/sse', async (req, res) => {
+            if (transport) await transport.handlePostMessage(req, res);
+        });
+        app.post('/message', async (req, res) => {
+            if (transport) await transport.handlePostMessage(req, res);
+        });
+        app.listen(PORT, '0.0.0.0', () => {
+            console.error(`Slack MCP Server running on http://0.0.0.0:${PORT}/sse`);
+        });
+    } else {
+        const transport = new StdioServerTransport();
+        await server.connect(transport);
+        console.error('Slack MCP Server running on stdio');
+    }
 }
 
 main().catch(console.error);
